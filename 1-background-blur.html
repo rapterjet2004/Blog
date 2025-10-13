@@ -1,0 +1,125 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="//cdn.muicss.com/mui-0.10.3/css/mui.min.css" rel="stylesheet" type="text/css" />
+    <script src="//cdn.muicss.com/mui-0.10.3/js/mui.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/default.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/languages/kotlin.min.js"></script>
+    <title>Julius' Tech Blog - Background Blur</title>
+  </head>
+  <body>
+    <header class="mui-appbar mui--z1">
+      <div class="mui-container">
+        <table width="100%">
+          <tr class="mui--appbar-height">
+            <td class="mui--text-title">Julius' Tech Blog</td>
+            <td class="mui--text-right">
+              <ul class="mui-list--inline mui--text-body2">
+                <li><a class="mui-btn mui-btn--primary" href="index.html">Home</a></li>
+                <li><a class="mui-btn mui-btn--primary" href="about.html">About</a></li>
+              </ul>
+            </td>
+          </tr>
+        </table>
+      </div>
+    </header>
+
+    <div id="content-container" class="mui-container" style="margin-top: 20px;">
+      <div class="mui-panel">
+        <h1>Implementing Background Blur on Android @ Nextcloud</h1>
+        <div class="mui-divider"></div>
+        <h2>The problem:</h2>
+        <p>
+            Most video conferencing apps now have a background blur feature, which is great for privacy and reducing distractions.
+            Think Zoom, Google Meet, Nextcloud Talk, etc. However, at Nextcloud this feature was present on iOS and Web, but not on Android.
+            Unlike iOS, background blurring is not built into the Android SDK. So I had to figure out how to implement it manually.
+            Implementing this feature on Android can be challenging due to the platform's limitations and the need for real-time processing.
+            Since at Nextcloud we use WebRTC for video calls, I had to find a way to integrate background blurring into the WebRTC video stream.
+            In addition, I had to find a way to segment the user from the background in real-time and blur the background which is a non-trivial task.
+            Finally, I had to ensure that the implementation was efficient and did not introduce significant latency or degrade video quality,
+            while also being maintainable for future developers to understand, extend, and debug.
+        </p>
+        <h2>The Research:</h2>
+        <p>
+            For segmenting the background/foreground, I decided to use <a href="https://github.com/google-ai-edge/mediapipe">Media Pipe</a>,
+            an open source framework AI/ML with first class support for Android. As for the model itself, I used the Selfie Segmentation model from Google,
+            the light weight (250 KB), on device image segmentation model is available for commercial use (Apache License V2)
+            here is <a href="https://storage.googleapis.com/mediapipe-assets/Model%20Card%20MediaPipe%20Selfie%20Segmentation.pdf">more info</a> about the model.
+            As for blurring the background, I used <a href="https://opencv.org/">OpenCV</a>, a popular computer vision library with Android support. It supports
+            Guassian blur, which is a common technique for blurring images, due to it's kernel being able to be split into two 1D kernels, making it very efficient
+            for parallelization. OpenCV uses JNI (Java Native Interface) under the hood to call native C++ code to make use of true parallelization, low latency, and
+            advanced compiler and hardware specfic optimizations, so I don't have to.
+        </p>
+        <pre class="language-kotlin">
+            <label>build.kt</label>
+            <code>
+    // Computer Vision - for background effects during video calls
+    implementation('com.google.mediapipe:tasks-vision:0.10.26')
+    implementation('org.opencv:opencv:4.12.0')
+            </code>
+        </pre>
+        <h2>The Implementation:</h2>
+        <p>
+            I created/edited 13 files, but here are the 2 main files of value worth discussing. Listed
+            <ul>
+                <li>
+                    <p>
+                        <code>BackgroundBlurFrameProcessor</code> an implementation of <code>VideoProcessor</code> which is an interface that WebRTC provides to perform operations on camera frames,
+                        and <code>ImageSegmentationHelper.SegmenterListener</code>, which is a small interface I wrote to handle asynchronous passing of camera frames from MediaPipe
+                        (You can actually handle it synchronously too, since the VideoProcessor operates on it's own thread, but this is cleaner)
+                    </p>
+                    <a href="https://github.com/nextcloud/talk-android/blob/72f1498f0978d15c7e5cfeeeae57bca0316c3850/app/src/main/java/com/nextcloud/talk/camera/BackgroundBlurFrameProcessor.kt">Code found here</a>
+                </li>
+                <li>
+                    <p>
+                        <code>ImageSegmentationHelper</code> an edited version of <a href="https://github.com/google-ai-edge/mediapipe-samples/blob/d3671ea3ef4387b28b5bd22712ce73d911a6270f/examples/image_segmentation/android/category_mask/app/src/main/java/com/google/mediapipe/examples/imagesegmenter/ImageSegmenterHelper.kt">google's</a>.
+                        Basically a wrapper over MediaPipe's <code>ImageSegmenter</code> which uses the on device AI Model to segment images between the foreground and background.
+                    </p>
+                    <a href="https://github.com/nextcloud/talk-android/blob/72f1498f0978d15c7e5cfeeeae57bca0316c3850/app/src/main/java/com/nextcloud/talk/camera/ImageSegmenterHelper.kt">Code found here</a>
+                </li>
+                
+            </ul>
+        </p>
+
+
+        <h2>The Result:</h2>
+        <table>
+            <tr>
+                <td>
+                    <h3>Mask:</h3>
+                    <img src="https://private-user-images.githubusercontent.com/69230048/490166156-57dcf951-aafd-4474-ba5e-773b9558e943.png?jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3NjAzNzExNTQsIm5iZiI6MTc2MDM3MDg1NCwicGF0aCI6Ii82OTIzMDA0OC80OTAxNjYxNTYtNTdkY2Y5NTEtYWFmZC00NDc0LWJhNWUtNzczYjk1NThlOTQzLnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNTEwMTMlMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjUxMDEzVDE1NTQxNFomWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPTc1OGZiM2ViMTFlMGNhYjY5M2Y3ZjBkM2U0MGY0MjBmMzJkMmI4MjcwZGI3ODMxOWE1N2I5ZDljYThmYzg4YjAmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0In0.ZErMJViy4Ig2rdl-BMqalw71Zh0Y4QnKTHcIcG0pTsY" alt="Background Blur Mask" width="300"/>
+                </td>
+                <td>
+                    <h3>Post Process</h3>
+                    <img src="https://private-user-images.githubusercontent.com/69230048/490166184-4c388eba-badf-4ab0-8df4-aebaeecb4c69.png?jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3NjAzNzExNTQsIm5iZiI6MTc2MDM3MDg1NCwicGF0aCI6Ii82OTIzMDA0OC80OTAxNjYxODQtNGMzODhlYmEtYmFkZi00YWIwLThkZjQtYWViYWVlY2I0YzY5LnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNTEwMTMlMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjUxMDEzVDE1NTQxNFomWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPWM5ZTUwN2RhZDNiZWIzZDc4NDVkYTEwZThkODM3M2JkZTUyODE5NzQ0Y2Y2MDkwYTNjM2M3MDcxYzU5ZDdkNjMmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0In0.Ns5WFCfrf7QJ0y6XARqNZGglLgPc1ojnSb_JwY3rifM" alt="Background Blur" width="300"/>
+                </td>
+            </tr>    
+        </table>
+
+        <h3>Notes</h3>
+        <p>
+            The model runs at ~16 FPS on a Pixel 7a, which is decent for real-time video processing.
+            The blurring effect is good, but not perfect. There are some artifacts around the edges of the user,
+            especially when the user is moving quickly. This is likely due to the limitations of the segmentation model.
+            The performance can be improved by offloading work to the GPU, but this can lead to unmaintable code.
+            I opted to keep the implementation simple and maintainable by using CPU only processing. But it's worth a look in the future.
+        </p>
+      </div>
+    </div>
+
+    <footer style="margin-top: 20px;">
+      <div class="mui-container mui--text-center">
+        <p>I do not grant permission to use my content to train any AI model</p>
+      </div>
+    </footer>
+
+    <script src="router.js"></script>
+    <script>
+        hljs.highlightAll();
+    </script>
+  </body>
+</html>
