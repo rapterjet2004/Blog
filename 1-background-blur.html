@@ -91,18 +91,19 @@
             <tr>
                 <td>
                     <h3>Mask:</h3>
-                    <img src="https://private-user-images.githubusercontent.com/69230048/490166156-57dcf951-aafd-4474-ba5e-773b9558e943.png?jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3NjAzNzExNTQsIm5iZiI6MTc2MDM3MDg1NCwicGF0aCI6Ii82OTIzMDA0OC80OTAxNjYxNTYtNTdkY2Y5NTEtYWFmZC00NDc0LWJhNWUtNzczYjk1NThlOTQzLnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNTEwMTMlMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjUxMDEzVDE1NTQxNFomWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPTc1OGZiM2ViMTFlMGNhYjY5M2Y3ZjBkM2U0MGY0MjBmMzJkMmI4MjcwZGI3ODMxOWE1N2I5ZDljYThmYzg4YjAmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0In0.ZErMJViy4Ig2rdl-BMqalw71Zh0Y4QnKTHcIcG0pTsY" alt="Background Blur Mask" width="300"/>
+                    <img src="res/bb-mask.png" alt="Background Blur Mask" width="300"/>
                 </td>
                 <td>
                     <h3>Post Process</h3>
-                    <img src="https://private-user-images.githubusercontent.com/69230048/490166184-4c388eba-badf-4ab0-8df4-aebaeecb4c69.png?jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3NjAzNzExNTQsIm5iZiI6MTc2MDM3MDg1NCwicGF0aCI6Ii82OTIzMDA0OC80OTAxNjYxODQtNGMzODhlYmEtYmFkZi00YWIwLThkZjQtYWViYWVlY2I0YzY5LnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNTEwMTMlMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjUxMDEzVDE1NTQxNFomWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPWM5ZTUwN2RhZDNiZWIzZDc4NDVkYTEwZThkODM3M2JkZTUyODE5NzQ0Y2Y2MDkwYTNjM2M3MDcxYzU5ZDdkNjMmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0In0.Ns5WFCfrf7QJ0y6XARqNZGglLgPc1ojnSb_JwY3rifM" alt="Background Blur" width="300"/>
+                    <img src="res/bb-post-process.png" alt="Background Blur" width="300"/>
                 </td>
             </tr>    
         </table>
 
         <h3>Notes</h3>
         <p>
-            The model runs at ~16 FPS on a Pixel 7a, which is decent for real-time video processing.
+            The model runs at ~19 FPS on a Pixel 7a, which is decent for real-time video processing.
+            There can be distortion effects on older devices, but it works well on modern devices.
             The blurring effect is good, but not perfect. There are some artifacts around the edges of the user,
             especially when the user is moving quickly. This is likely due to the limitations of the segmentation model.
             The performance can be improved by offloading work to the GPU, but this can lead to unmaintable code.
@@ -118,8 +119,5 @@
     </footer>
 
     <script src="router.js"></script>
-    <script>
-        hljs.highlightAll();
-    </script>
   </body>
 </html>
