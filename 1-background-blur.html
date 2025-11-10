@@ -62,6 +62,24 @@
     implementation('org.opencv:opencv:4.12.0')
             </code>
         </pre>
+        <p>A little background knowledge is needed about image file formats as well. Typically, AI models like these rely on 
+            RGB images, which are 3 channel images, where each pixel is represented by 3 values (Red, Green, Blue).
+            However, WebRTC uses YUV images, which are 3 channel images as well, which means three values are used to represent 1 pixel. But the channels are Y (luminance), U (chrominance blue), and V (chrominance red).
+            The Y channel is a grayscale image, while the U and V channels are used to represent color information.
+            The YUV format is more efficient for video compression and transmission, which is why cameras natively support it, but to use it with
+            AI models, we need to convert it to RGB format.
+        </p>
+        <img src="https://dexonsystems.com/upload/public/thumbs/BLOG/What%20are%20RGB%20and%20YUV%20color%20spaces/YUV.jpg" style="width: 600px;"/>
+        
+        <img src="res/Better rgb drawing.png" style="width: 600px;"/>
+        
+        <p>There are also different types of ways to format YUV files, depending on the underlying implementation. Thankfully, WebRTC provides
+          a helper class <a href="https://chromium.googlesource.com/external/webrtc/+/HEAD/sdk/android/api/org/webrtc/YuvHelper.java">YUVHelper</a> to abstract away the conversion logic. But it can be helpful to understand
+          that at the end of the day, it's still just a 2d array.
+        </p>
+        
+        <img src="res/Better YUV format drawing.png" style="width: 800px;"/>
+        
         <h2>The Implementation:</h2>
         <p>
             I created/edited 13 files, but here are the 2 main files of value worth discussing. Listed
@@ -72,14 +90,14 @@
                         and <code>ImageSegmentationHelper.SegmenterListener</code>, which is a small interface I wrote to handle asynchronous passing of camera frames from MediaPipe
                         (You can actually handle it synchronously too, since the VideoProcessor operates on it's own thread, but this is cleaner)
                     </p>
-                    <a href="https://github.com/nextcloud/talk-android/blob/72f1498f0978d15c7e5cfeeeae57bca0316c3850/app/src/main/java/com/nextcloud/talk/camera/BackgroundBlurFrameProcessor.kt">Code found here</a>
+                    <a href="https://github.com/nextcloud/talk-android/blob/master/app/src/main/java/com/nextcloud/talk/camera/BackgroundBlurFrameProcessor.kt">Code found here</a>
                 </li>
                 <li>
                     <p>
                         <code>ImageSegmentationHelper</code> an edited version of <a href="https://github.com/google-ai-edge/mediapipe-samples/blob/d3671ea3ef4387b28b5bd22712ce73d911a6270f/examples/image_segmentation/android/category_mask/app/src/main/java/com/google/mediapipe/examples/imagesegmenter/ImageSegmenterHelper.kt">google's</a>.
                         Basically a wrapper over MediaPipe's <code>ImageSegmenter</code> which uses the on device AI Model to segment images between the foreground and background.
                     </p>
-                    <a href="https://github.com/nextcloud/talk-android/blob/72f1498f0978d15c7e5cfeeeae57bca0316c3850/app/src/main/java/com/nextcloud/talk/camera/ImageSegmenterHelper.kt">Code found here</a>
+                    <a href="https://github.com/nextcloud/talk-android/blob/master/app/src/main/java/com/nextcloud/talk/camera/ImageSegmenterHelper.kt">Code found here</a>
                 </li>
                 
             </ul>
@@ -91,11 +109,11 @@
             <tr>
                 <td>
                     <h3>Mask:</h3>
-                    <img src="res/bb-mask.png" alt="Background Blur Mask" width="300"/>
+                    <img src="res/bb-mask.png" alt="Background Blur Mask" width="500"/>
                 </td>
                 <td>
                     <h3>Post Process</h3>
-                    <img src="res/bb-post-process.png" alt="Background Blur" width="300"/>
+                    <img src="res/bb-post-process.png" alt="Background Blur" width="500"/>
                 </td>
             </tr>    
         </table>
